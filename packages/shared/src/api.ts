@@ -50,3 +50,14 @@ export interface AuthResponse {
   /** Время жизни access-токена в секундах. */
   expiresIn: number;
 }
+
+/** Категория трат в ответах API. */
+export interface Category {
+  id: string;
+  name: string;
+  color: string;
+  icon: string;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+}

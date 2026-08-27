@@ -1,5 +1,5 @@
 import { ConflictException } from '@nestjs/common';
-import type { EventBus, ICommandHandler } from '@nestjs/cqrs';
+import type { ICommandHandler, EventBus } from '@nestjs/cqrs';
 import { CommandHandler } from '@nestjs/cqrs';
 import type { AuthResponse } from '@expense-tracker/shared';
 import type { UsersService } from '../../../users/users.service';

@@ -1,5 +1,5 @@
 // Схема Prisma для трекера расходов.
-// Модели (Expense, Category, ...) проектируются на следующем этапе.
+// Остальные модели (Expense, ...) проектируются на следующем этапе.
 
 generator client {
   provider     = "prisma-client"
@@ -24,5 +24,21 @@ model User {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
+  categories Category[]
+
   @@map("users")
+}
+
+model Category {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  name      String
+  color     String
+  icon      String
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("categories")
 }
