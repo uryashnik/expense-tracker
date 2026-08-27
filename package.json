@@ -1,0 +1,49 @@
+{
+  "name": "expense-tracker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Трекер расходов: монорепозиторий (Next.js + NestJS + Prisma)",
+  "packageManager": "npm@10.9.3",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f db",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{js,mjs,cjs,json,md,css,yml,yaml}": [
+      "prettier --write"
+    ]
+  },
+  "devDependencies": {
+    "@commitlint/cli": "21.2.2",
+    "@commitlint/config-conventional": "21.2.2",
+    "@eslint/js": "9.39.5",
+    "eslint": "9.39.5",
+    "eslint-config-prettier": "10.1.8",
+    "husky": "9.1.7",
+    "lint-staged": "16.4.0",
+    "prettier": "3.9.6",
+    "turbo": "2.10.11",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.67.0"
+  }
+}

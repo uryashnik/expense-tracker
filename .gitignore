@@ -1,0 +1,33 @@
+# Зависимости
+node_modules/
+
+# Сборка
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# Кэш инструментов
+.turbo/
+.eslintcache
+coverage/
+
+# Prisma: сгенерированный клиент
+apps/api/src/generated/
+
+# Окружение
+.env
+.env.*
+!.env.example
+
+# ОС и редакторы
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Логи
+*.log
+npm-debug.log*

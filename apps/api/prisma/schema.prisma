@@ -1,0 +1,28 @@
+// Схема Prisma для трекера расходов.
+// Модели (Expense, Category, ...) проектируются на следующем этапе.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  // Nest компилируется в CommonJS, поэтому клиент генерируем в том же формате.
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+  // В Prisma 7 `url` в схеме запрещён: для CLI он задаётся в prisma.config.ts,
+  // а рантайм получает подключение через адаптер в PrismaClient.
+}
+
+model User {
+  id           String    @id @default(uuid(7)) @db.Uuid
+  email        String    @unique
+  name         String
+  passwordHash String
+  isActive     Boolean   @default(true) // мягкая блокировка без удаления
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@map("users")
+}
