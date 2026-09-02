@@ -24,6 +24,14 @@ export default tseslint.config(
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
+    },
+  },
+  {
+    // Не для apps/api: type-only импорты стирают метаданные, нужные Nest для DI
+    // и ValidationPipe. Правило выключено и в apps/api/eslint.config.mjs, но
+    // lint-staged в pre-commit запускает eslint из корня, где берётся этот конфиг.
+    ignores: ['apps/api/**/*.ts'],
+    rules: {
       '@typescript-eslint/consistent-type-imports': ['error', { prefer: 'type-imports' }],
     },
   },
