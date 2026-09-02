@@ -74,6 +74,17 @@ shared/         # переиспользуемое без знания о дом
 ## Соглашения
 
 - Скоуп пакетов — `@expense-tracker/*` (через `s`), несмотря на опечатку в имени каталога `expence-tracker`. По той же причине в `docker-compose.yml` явно задан `name: expense-tracker`.
-- Коммиты проверяются commitlint (conventional). Разрешённые scope: `web`, `api`, `shared`, `repo`, `db`, `deps`.
 - Pre-commit прогоняет lint-staged (ESLint --fix + Prettier).
-- В `apps/api/eslint.config.mjs` правило `consistent-type-imports` отключено: type-only импорты стирают метаданные, нужные Nest для DI.
+- Правило `consistent-type-imports` отключено для `apps/api` **в двух местах**: в `apps/api/eslint.config.mjs` и отдельным блоком с `ignores: ['apps/api/**/*.ts']` в корневом `eslint.config.mjs`. Второй нужен потому, что lint-staged в pre-commit запускает `eslint --fix` из корня, а flat config берётся по CWD — иначе хук переписывает обычные импорты обратно в `import type`, а те стирают метаданные, нужные Nest для DI и `ValidationPipe`.
+
+### Коммиты
+
+Проверяются commitlint (`commitlint.config.mjs`, extends `@commitlint/config-conventional`) в хуке `commit-msg`, поэтому формат обязателен: `type(scope): описание`.
+
+- **Разрешённые scope** (`scope-enum`, ошибка при другом значении): `web`, `api`, `shared`, `repo`, `db`, `deps`. `repo` — для корневых конфигов, тулинга и документации; `db` — для Prisma-схемы и миграций.
+- **Тип** — из conventional-набора: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `build`, `ci`, `perf`, `style`, `revert`.
+- Описание в нижнем регистре, без точки в конце, в повелительном наклонении: `feat(api): add transactions module`.
+- Один коммит — одно изменение по смыслу. Работу, которая задевает несколько слоёв, разбивай по scope: схема и миграция → `db`, транспортные типы → `shared`, модуль Nest → `api`, корневые конфиги → `repo`.
+- Правки, не относящиеся к задаче (починка чужого бага, конфиг тулинга), выносятся в отдельный коммит, а не примешиваются к `feat`.
+
+Проверить сообщение до коммита: `echo 'feat(api): …' | npx commitlint`.
