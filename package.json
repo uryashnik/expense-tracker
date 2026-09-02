@@ -13,6 +13,8 @@
   ],
   "scripts": {
     "dev": "turbo run dev",
+    "dev:api": "npm run dev -w @expense-tracker/api",
+    "dev:web": "npm run dev -w @expense-tracker/web",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
