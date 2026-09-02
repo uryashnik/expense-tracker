@@ -61,3 +61,30 @@ export interface Category {
   createdAt: string;
   updatedAt: string;
 }
+
+/** Направление движения денег. */
+export type TransactionType = 'INCOME' | 'EXPENSE';
+
+/** Транзакция в ответах API. */
+export interface Transaction {
+  id: string;
+  /** Сумма операции. Всегда положительная, знак определяется полем type. */
+  amount: number;
+  type: TransactionType;
+  description: string | null;
+  /** Дата операции (ISO), задаётся пользователем — не путать с createdAt. */
+  date: string;
+  categoryId: string;
+  userId: string;
+  createdAt: string;
+}
+
+/** Ответ GET /api/transactions/summary: итоги за календарный месяц. */
+export interface TransactionSummary {
+  month: number;
+  year: number;
+  totalIncome: number;
+  totalExpense: number;
+  /** totalIncome - totalExpense. */
+  balance: number;
+}
