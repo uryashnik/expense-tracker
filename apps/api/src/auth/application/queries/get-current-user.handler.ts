@@ -2,7 +2,7 @@ import { UnauthorizedException } from '@nestjs/common';
 import type { IQueryHandler } from '@nestjs/cqrs';
 import { QueryHandler } from '@nestjs/cqrs';
 import type { AuthUser } from '@expense-tracker/shared';
-import type { UsersService } from '../../../users/users.service';
+import { UsersService } from '../../../users/users.service';
 import { GetCurrentUserQuery } from './get-current-user.query';
 
 @QueryHandler(GetCurrentUserQuery)

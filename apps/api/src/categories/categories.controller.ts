@@ -13,9 +13,9 @@ import {
 import type { Category } from '@expense-tracker/shared';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/types/jwt-payload';
-import type { CategoriesService } from './categories.service';
-import type { CreateCategoryDto } from './dto/create-category.dto';
-import type { UpdateCategoryDto } from './dto/update-category.dto';
+import { CategoriesService } from './categories.service';
+import { CreateCategoryDto } from './dto/create-category.dto';
+import { UpdateCategoryDto } from './dto/update-category.dto';
 
 // Явного @UseGuards не нужно: JwtAuthGuard подключён глобально через APP_GUARD
 // в auth.module.ts, эндпоинт открыт только если явно помечен @Public().

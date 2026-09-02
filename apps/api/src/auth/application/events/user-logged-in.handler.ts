@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import type { IEventHandler } from '@nestjs/cqrs';
 import { EventsHandler } from '@nestjs/cqrs';
-import type { UsersService } from '../../../users/users.service';
+import { UsersService } from '../../../users/users.service';
 import { UserLoggedInEvent } from './user-logged-in.event';
 
 /**

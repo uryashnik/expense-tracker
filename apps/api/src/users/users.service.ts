@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { AuthUser } from '@expense-tracker/shared';
 import type { User } from '../generated/prisma/client';
-import type { UsersRepository } from './users.repository';
+import { UsersRepository } from './users.repository';
 import type { CreateUserDto } from './dto/create-user.dto';
 
 /**

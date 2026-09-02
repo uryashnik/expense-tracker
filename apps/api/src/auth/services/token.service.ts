@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { JwtService } from '@nestjs/jwt';
+import { JwtService } from '@nestjs/jwt';
 import type { User } from '../../generated/prisma/client';
 import type { JwtPayload } from '../types/jwt-payload';
 

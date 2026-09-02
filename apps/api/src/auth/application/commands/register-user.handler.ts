@@ -1,10 +1,10 @@
 import { ConflictException } from '@nestjs/common';
-import type { ICommandHandler, EventBus } from '@nestjs/cqrs';
-import { CommandHandler } from '@nestjs/cqrs';
+import type { ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, EventBus } from '@nestjs/cqrs';
 import type { AuthResponse } from '@expense-tracker/shared';
-import type { UsersService } from '../../../users/users.service';
-import type { PasswordService } from '../../services/password.service';
-import type { TokenService } from '../../services/token.service';
+import { UsersService } from '../../../users/users.service';
+import { PasswordService } from '../../services/password.service';
+import { TokenService } from '../../services/token.service';
 import { UserRegisteredEvent } from '../events/user-registered.event';
 import { RegisterUserCommand } from './register-user.command';
 

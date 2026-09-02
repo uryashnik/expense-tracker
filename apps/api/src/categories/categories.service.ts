@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { Category as CategoryResponse } from '@expense-tracker/shared';
 import type { Category as CategoryEntity } from '../generated/prisma/client';
-import type { CategoriesRepository } from './categories.repository';
+import { CategoriesRepository } from './categories.repository';
 import type { CreateCategoryDto } from './dto/create-category.dto';
 import type { UpdateCategoryDto } from './dto/update-category.dto';
 
