@@ -31,6 +31,15 @@ export class CategoriesService {
     await this.categoriesRepository.delete(id);
   }
 
+  /**
+   * Категория пользователя или null, если её нет или она чужая.
+   * Нужна другим модулям (transactions) для проверки categoryId из запроса.
+   */
+  async findOwnedById(userId: string, id: string): Promise<CategoryEntity | null> {
+    const category = await this.categoriesRepository.findById(id);
+    return category && category.userId === userId ? category : null;
+  }
+
   /** Маппер для ответов API. */
   toCategory(category: CategoryEntity): CategoryResponse {
     return {
@@ -46,8 +55,8 @@ export class CategoriesService {
 
   /** Категория чужая или не существует — в обоих случаях 404, чтобы не палить чужие id. */
   private async assertOwnership(userId: string, id: string): Promise<void> {
-    const category = await this.categoriesRepository.findById(id);
-    if (!category || category.userId !== userId) {
+    const category = await this.findOwnedById(userId, id);
+    if (!category) {
       throw new NotFoundException('Категория не найдена');
     }
   }
