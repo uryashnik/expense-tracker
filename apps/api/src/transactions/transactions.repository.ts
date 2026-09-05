@@ -10,6 +10,12 @@ export interface TransactionFilters {
   categoryId?: string;
 }
 
+/** Окно выборки, посчитанное из page/limit. */
+export interface TransactionPage {
+  skip: number;
+  take: number;
+}
+
 /** Суммы по направлениям за период, как их отдаёт groupBy. */
 export interface TransactionTypeSum {
   type: TransactionType;
@@ -27,20 +33,31 @@ export class TransactionsRepository {
     return this.prisma.transaction.create({ data: { ...data, userId } });
   }
 
-  findAllByUser(userId: string, filters: TransactionFilters): Promise<Transaction[]> {
-    return this.prisma.transaction.findMany({
-      where: {
-        userId,
-        type: filters.type,
-        categoryId: filters.categoryId,
-        // Ключ date добавляем только при заданных границах: пустой объект
-        // в фильтре Prisma допустим, но зашумляет запрос.
-        ...(filters.dateFrom || filters.dateTo
-          ? { date: { gte: filters.dateFrom, lte: filters.dateTo } }
-          : {}),
-      },
-      orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
-    });
+  /**
+   * Страница транзакций и общее число подходящих под фильтр записей.
+   * Оба запроса идут одной транзакцией, иначе total может разойтись со
+   * страницей из-за параллельной вставки.
+   */
+  async findPageByUser(
+    userId: string,
+    filters: TransactionFilters,
+    page: TransactionPage,
+  ): Promise<{ items: Transaction[]; total: number }> {
+    const where = this.buildWhere(userId, filters);
+
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.transaction.findMany({
+        where,
+        // createdAt вторым ключом: у транзакций одной даты порядок иначе
+        // не определён, и записи «прыгали» бы между страницами.
+        orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
+        skip: page.skip,
+        take: page.take,
+      }),
+      this.prisma.transaction.count({ where }),
+    ]);
+
+    return { items, total };
   }
 
   findById(id: string): Promise<Transaction | null> {
@@ -67,5 +84,18 @@ export class TransactionsRepository {
       _sum: { amount: true },
     });
     return rows;
+  }
+
+  private buildWhere(userId: string, filters: TransactionFilters): Prisma.TransactionWhereInput {
+    return {
+      userId,
+      type: filters.type,
+      categoryId: filters.categoryId,
+      // Ключ date добавляем только при заданных границах: пустой объект
+      // в фильтре Prisma допустим, но зашумляет запрос.
+      ...(filters.dateFrom || filters.dateTo
+        ? { date: { gte: filters.dateFrom, lte: filters.dateTo } }
+        : {}),
+    };
   }
 }

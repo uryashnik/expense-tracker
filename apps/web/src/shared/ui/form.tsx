@@ -1,8 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import type * as LabelPrimitive from '@radix-ui/react-label';
-import { Slot } from '@radix-ui/react-slot';
+import { type Label as LabelPrimitive, Slot } from 'radix-ui';
 import {
   Controller,
   FormProvider,
@@ -27,10 +26,17 @@ interface FormFieldContextValue<
 
 const FormFieldContext = React.createContext<FormFieldContextValue>({} as FormFieldContextValue);
 
+/**
+ * TTransformedValues добавлен к сигнатуре из shadcn: у схем с transform
+ * (например «строка суммы → число» в features/transaction-create) значения формы
+ * и разобранное значение — разные типы, и без третьего параметра Control
+ * от такого useForm не подходит к FormField.
+ */
 function FormField<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
->({ ...props }: ControllerProps<TFieldValues, TName>) {
+  TTransformedValues = TFieldValues,
+>({ ...props }: ControllerProps<TFieldValues, TName, TTransformedValues>) {
   return (
     <FormFieldContext.Provider value={{ name: props.name }}>
       <Controller {...props} />
@@ -91,11 +97,11 @@ function FormLabel({ className, ...props }: React.ComponentProps<typeof LabelPri
   );
 }
 
-function FormControl({ ...props }: React.ComponentProps<typeof Slot>) {
+function FormControl({ ...props }: React.ComponentProps<typeof Slot.Root>) {
   const { error, formItemId, formDescriptionId, formMessageId } = useFormField();
 
   return (
-    <Slot
+    <Slot.Root
       data-slot="form-control"
       id={formItemId}
       aria-describedby={!error ? formDescriptionId : `${formDescriptionId} ${formMessageId}`}

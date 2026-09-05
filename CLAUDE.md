@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Трекер личных расходов. Монорепозиторий на npm workspaces + Turborepo: `apps/web` (Next.js 16, App Router), `apps/api` (NestJS 11), `packages/shared` (общие типы контрактов API). БД — PostgreSQL 17 в Docker, ORM — Prisma 7.
 
-Сейчас в репозитории только каркас: моделей Prisma, миграций, аутентификации, тестов и CI ещё нет.
+Готовы: схема Prisma с миграциями (`User`, `Category`, `Transaction`), аутентификация по JWT, CRUD категорий и транзакций, главный экран. Тестов и CI ещё нет.
 
 ## Команды
 
@@ -39,18 +39,37 @@ npm run build / lint / typecheck / format       # по всем workspace чер
 
 ```
 app/            # роуты Next.js (тонкие: страница = вёрстка + импорт фичи/виджета)
-widgets/        # композиция сущностей+фич для конкретного места в UI (auth-status)
-features/       # самостоятельное действие пользователя (auth-login, auth-register, auth-logout):
+widgets/        # композиция сущностей+фич для конкретного места в UI
+                #   (auth-status, dashboard-header, month-summary, transaction-list)
+features/       # самостоятельное действие пользователя (auth-login, auth-register, auth-logout,
+                #   transaction-create, transaction-delete, transactions-filter, category-create):
                 #   model/ — zod-схема, api/ — 'use server' экшен, ui/ — форма
-entities/       # бизнес-сущности: session (httpOnly-cookie с access-токеном), user
+entities/       # бизнес-сущности: session (httpOnly-cookie с access-токеном), user,
+                #   category, transaction
 shared/         # переиспользуемое без знания о домене: api/ (клиент+ошибки), ui/ (shadcn), lib/ (cn)
 ```
 
-Слой может импортировать только из слоёв ниже себя (`app → widgets → features → entities → shared`), не наоборот и не соседей одного уровня напрямую — исключение оговорено явно, если появится. Публичный API каждого среза — его `index.ts`; импортируй `@/features/auth-login`, а не `@/features/auth-login/ui/login-form`.
+Слой может импортировать только из слоёв ниже себя (`app → widgets → features → entities → shared`), не наоборот и не соседей одного уровня напрямую — исключение оговорено явно, если появится. Соседей связывают слотами: `TransactionRow` (entities/transaction) принимает категорию и действия готовыми `ReactNode`, а собирает их виджет, которому доступны оба слоя. Публичный API каждого среза — его `index.ts`; импортируй `@/features/auth-login`, а не `@/features/auth-login/ui/login-form`.
 
-**Аутентификация.** `POST /auth/login` и `/auth/register` отдают JWT в теле ответа (`AuthResponse.accessToken`), который `entities/session` (`apps/web/src/entities/session/lib/session.ts`) кладёт в httpOnly-cookie на срок `expiresIn`; `entities/user` читает её и ходит в `GET /auth/me` с заголовком `Authorization: Bearer`. Экшены в `features/auth-*/api/actions.ts` — единственное место, где создаётся/удаляется сессия и куда вызывается `redirect()`.
+**Главный экран** (`app/page.tsx`). Неавторизованных уводит на `/login`. Все три запроса (категории, страница транзакций, сводка за месяц) идут одним `Promise.all` в самой странице, а не внутри виджетов: вложенные серверные компоненты выстроили бы их в водопад. Фильтры и номер страницы живут в query-строке, а не в `useState`, — список рисует серверный компонент, поэтому смена фильтра это навигация; заодно состояние переживает перезагрузку и передаётся ссылкой. Страница за пределами списка (сохранённая ссылка, удалённые записи, смена фильтра) редиректится на последнюю существующую — иначе экран показывал бы пустоту при ненулевом `total`.
 
-**shadcn/ui.** `apps/web/components.json` настраивает алиасы shadcn на FSD-раскладку (`ui`/`components` → `shared/ui`, `utils` → `shared/lib/utils`), так что `npx shadcn add <name>` кладёт компонент туда же, где уже лежат остальные (`button`, `input`, `label`, `card`, `form`, `alert`). Токены компонентов (`--color-background`, `--color-primary`, `--color-border` и т.д.) в `globals.css` — не отдельная палитра, а алиасы через `var()` поверх уже существующих `--color-surface`/`--color-ink`/`--color-accent`: так тёмная тема остаётся общей и переопределяется в одном месте. Не заводи новый `--color-accent`-подобный токен под нейтральный hover-фон — там, где стандартный shadcn использует `accent`/`accent-foreground` (hover у `outline`/`ghost`), в этом проекте переиспользован `secondary`, потому что `--color-accent` уже занят под фирменный синий (= shadcn `primary`).
+**Пагинация.** `GET /transactions` принимает `page` и `limit` (по умолчанию 1 и 10) и возвращает `Paginated<Transaction>`. В репозитории `findMany` и `count` идут одной транзакцией Prisma: иначе `total` может разойтись со страницей из-за параллельной вставки. Сортировка — по `date`, вторым ключом `createdAt`: у записей одной даты порядок иначе не определён, и они «прыгали» бы между страницами. Размер страницы продублирован во фронтенде как `TRANSACTIONS_PAGE_SIZE` (`entities/transaction`).
+
+**Аутентификация.** `POST /auth/login` и `/auth/register` отдают JWT в теле ответа (`AuthResponse.accessToken`), который `entities/session` (`apps/web/src/entities/session/lib/session.ts`) кладёт в httpOnly-cookie на срок `expiresIn`; `entities/user` читает её и ходит в `GET /auth/me` с заголовком `Authorization: Bearer`. Экшены в `features/auth-*/api/actions.ts` — единственное место, где создаётся/удаляется сессия.
+
+Все остальные запросы к API берут заголовок у `getAuthHeaders()` из `entities/session`: без токена он сам делает `redirect('/login')`, поэтому истёкшая кука одинаково обрабатывается и на страницах, и в экшенах. **Вызывать его нужно вне `try/catch`** — `redirect()` бросает `NEXT_REDIRECT`, и `catch` превратил бы переход в «ошибку запроса».
+
+**shadcn/ui.** `apps/web/components.json` настраивает алиасы shadcn на FSD-раскладку (`ui`/`components` → `shared/ui`, `utils` → `shared/lib/utils`), так что `npx shadcn add <name>` кладёт компонент туда же, где уже лежат остальные. После `shadcn add` проверь три вещи — CLI ошибается на каждой:
+
+1. **Импорт `cn`.** CLI пишет `import { cn } from "cn"`, подтягивая посторонний npm-пакет вместо алиаса. Меняй на `@/shared/lib/utils` и не давай `cn` попасть в зависимости.
+2. **Токены `accent`.** Заменяй `accent`/`accent-foreground` на `secondary`/`secondary-foreground` (см. ниже).
+3. **Примитивы Radix.** В проекте они берутся из единого пакета `radix-ui` (`import { Dialog as DialogPrimitive } from 'radix-ui'`), а не из точечных `@radix-ui/react-*` — так их подключает актуальный реестр shadcn, и второй способ в репозитории не заводим.
+
+Отдельно: `FormField` в `shared/ui/form.tsx` дополнен третьим параметром `TTransformedValues` относительно исходника shadcn. Он нужен схемам с `transform` (у `transaction-create` сумма — строка на входе и число на выходе): без него `Control` от такого `useForm` не подходит по типу. При перегенерации `form` этот параметр придётся вернуть.
+
+Токены компонентов (`--color-background`, `--color-primary`, `--color-border` и т.д.) в `globals.css` — не отдельная палитра, а алиасы через `var()` поверх уже существующих `--color-surface`/`--color-ink`/`--color-accent`: так тёмная тема остаётся общей и переопределяется в одном месте. Не заводи новый `--color-accent`-подобный токен под нейтральный hover-фон — там, где стандартный shadcn использует `accent`/`accent-foreground` (hover у `outline`/`ghost`), в этом проекте переиспользован `secondary`, потому что `--color-accent` уже занят под фирменный синий (= shadcn `primary`).
+
+Обратная сторона: если компонент красится токеном, которого в `globals.css` нет, Tailwind v4 просто не сгенерирует класс — без ошибки. Так `dropdown-menu` и `select` какое-то время открывались вообще без фона из-за отсутствующего `--color-popover`. Добавляя компонент, сверяй его токены со списком в `@theme`.
 
 **Валидация форм.** Zod-схемы в `features/*/model/schema.ts` зеркалят ограничения DTO из `apps/api` (длина имени, формат email, `password` ≥ 8 символов с буквой и цифрой) и требуют непустые поля — это первый рубеж проверки. Второй — сам API: серверный экшен обязательно валидирует данные ещё раз через `schema.safeParse` перед вызовом `api.post`, а `RegisterDto` в API собран с `forbidNonWhitelisted: true`, поэтому поле `confirmPassword` (только для формы) явно вырезается перед отправкой.
 
@@ -88,3 +107,18 @@ shared/         # переиспользуемое без знания о дом
 - Правки, не относящиеся к задаче (починка чужого бага, конфиг тулинга), выносятся в отдельный коммит, а не примешиваются к `feat`.
 
 Проверить сообщение до коммита: `echo 'feat(api): …' | npx commitlint`.
+
+### Ветки и Pull Request (GitHub Flow)
+
+Работаем по GitHub Flow: `main` всегда в рабочем состоянии и защищена от прямых коммитов — любое изменение приходит в неё только через Pull Request.
+
+1. Ветку заводим от свежей `main`: `git switch main && git pull && git switch -c feat/web-home-screen`.
+2. Имя ветки — `<тип>/<scope>-<краткое-описание>` в нижнем регистре через дефисы: тип и scope берём из того же набора, что и у коммитов (`feat`, `fix`, `docs`, `refactor`, `chore`, … × `web`, `api`, `shared`, `repo`, `db`, `deps`). Примеры: `feat/web-home-screen`, `fix/api-auth-cookie-expiry`, `db/add-category-model`.
+3. Одна ветка — одна фича. Внутри ветки коммиты по-прежнему дробим по scope (см. «Коммиты»), а не сваливаем всё в один.
+4. Пушим рано и часто: `git push -u origin <branch>`. PR можно открыть черновиком (draft) сразу, чтобы обсуждение шло по ходу работы.
+5. Перед PR прогоняем локально `npm run lint`, `npm run typecheck`, `npm run build` — CI пока нет, поэтому это единственная проверка.
+6. PR-заголовок пишем в формате коммита (`feat(web): rebuild home screen`), в теле — что и зачем менялось. Ветка в PR обязана быть актуальной относительно `main`; расхождение решаем `git rebase main`, а не merge-коммитом внутрь ветки.
+7. Мержим squash-мержем — история `main` остаётся линейной, а сообщение squash-коммита должно проходить commitlint. После мержа ветку удаляем (и локально: `git branch -d`).
+8. `main` не откатываем и не переписываем (`push --force` в `main` запрещён). Ошибку чиним новым PR (`fix(...)` или `revert`).
+
+Пока `origin` не настроен, шаги 4 и 7 не выполнить — но ветки заводим по этим же правилам, чтобы после подключения GitHub ничего не переименовывать.

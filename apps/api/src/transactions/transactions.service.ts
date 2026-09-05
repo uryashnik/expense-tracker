@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type {
+  Paginated,
   Transaction as TransactionResponse,
   TransactionSummary,
 } from '@expense-tracker/shared';
@@ -33,13 +34,24 @@ export class TransactionsService {
     });
   }
 
-  findAllForUser(userId: string, query: FindTransactionsQueryDto): Promise<TransactionEntity[]> {
-    return this.transactionsRepository.findAllByUser(userId, {
-      dateFrom: query.dateFrom ? new Date(query.dateFrom) : undefined,
-      dateTo: query.dateTo ? new Date(query.dateTo) : undefined,
-      type: query.type,
-      categoryId: query.categoryId,
-    });
+  /** Страница списка транзакций, уже приведённая к типу ответа API. */
+  async findPageForUser(
+    userId: string,
+    query: FindTransactionsQueryDto,
+  ): Promise<Paginated<TransactionResponse>> {
+    const { page, limit } = query;
+    const { items, total } = await this.transactionsRepository.findPageByUser(
+      userId,
+      {
+        dateFrom: query.dateFrom ? new Date(query.dateFrom) : undefined,
+        dateTo: query.dateTo ? new Date(query.dateTo) : undefined,
+        type: query.type,
+        categoryId: query.categoryId,
+      },
+      { skip: (page - 1) * limit, take: limit },
+    );
+
+    return { items: items.map((item) => this.toTransaction(item)), total, page, limit };
   }
 
   async findOneForUser(userId: string, id: string): Promise<TransactionEntity> {

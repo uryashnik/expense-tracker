@@ -1,1 +1,1 @@
-export { createSession, getAccessToken, destroySession } from './lib/session';
+export { createSession, getAccessToken, getAuthHeaders, destroySession } from './lib/session';
