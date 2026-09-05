@@ -15,7 +15,7 @@ export function DashboardHeader({ user, categories }: { user: AuthUser; categori
     <header className="flex flex-wrap items-center gap-3 border-b pb-4">
       <span className="flex items-center gap-2 text-lg font-semibold tracking-tight">
         <Wallet className="size-5 text-primary" />
-        Трекер расходов
+        Трекер расходов Old
       </span>
 
       <div className="ml-auto flex items-center gap-2">
