@@ -26,10 +26,17 @@ interface FormFieldContextValue<
 
 const FormFieldContext = React.createContext<FormFieldContextValue>({} as FormFieldContextValue);
 
+/**
+ * TTransformedValues добавлен к сигнатуре из shadcn: у схем с transform
+ * (например «строка суммы → число» в features/transaction-create) значения формы
+ * и разобранное значение — разные типы, и без третьего параметра Control
+ * от такого useForm не подходит к FormField.
+ */
 function FormField<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
->({ ...props }: ControllerProps<TFieldValues, TName>) {
+  TTransformedValues = TFieldValues,
+>({ ...props }: ControllerProps<TFieldValues, TName, TTransformedValues>) {
   return (
     <FormFieldContext.Provider value={{ name: props.name }}>
       <Controller {...props} />
