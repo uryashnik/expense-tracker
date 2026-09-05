@@ -6,7 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Трекер личных расходов. Монорепозиторий на npm workspaces + Turborepo: `apps/web` (Next.js 16, App Router), `apps/api` (NestJS 11), `packages/shared` (общие типы контрактов API). БД — PostgreSQL 17 в Docker, ORM — Prisma 7.
 
-Готовы: схема Prisma с миграциями (`User`, `Category`, `Transaction`), аутентификация по JWT, CRUD категорий и транзакций, главный экран. Тестов и CI ещё нет.
+Готовы: схема Prisma с миграциями (`User`, `Category`, `Transaction`), аутентификация по JWT, CRUD категорий и транзакций, главный экран. Тестов нет; в `.github/workflows` лежат только два workflow с Claude (ревью PR и ответ на `@claude`) — сборку, линт и типы CI не прогоняет, это делается локально.
+
+**Этот файл — про монорепозиторий целиком.** Специфика приложений вынесена и подхватывается при работе в соответствующей папке:
+
+- `apps/api/CLAUDE.md` — слои модуля Nest, CQRS в `auth`, глобальный guard и проверка владения, валидация, Prisma 7, схема БД.
+- `apps/web/CLAUDE.md` — Feature-Sliced Design, серверные экшены, сессия в httpOnly-куке, shadcn/ui и токены Tailwind.
+- `apps/web/AGENTS.md` — предупреждение Next.js о ломающих изменениях версии (генерируется самим `next dev`).
 
 ## Команды
 
@@ -31,53 +37,11 @@ npm run build / lint / typecheck / format       # по всем workspace чер
 
 ## Архитектура
 
-**Поток данных.** Фронтенд ходит в API только из серверных компонентов и Server Actions через `apps/web/src/shared/api/client.ts` — тонкую обёртку над `fetch` с базовым URL из `process.env.API_URL` и дефолтным `cache: 'no-store'`. Клиентского слоя данных (TanStack Query и т.п.) в проекте намеренно нет: интерактивные формы (вход/регистрация) — клиентские компоненты, но саму сеть дёргают через `'use server'`-экшены, а не `fetch` из браузера.
-
-**Контракт ошибок.** `apps/api/src/common/filters/http-exception.filter.ts` приводит любое исключение к типу `ApiError` из `@expense-tracker/shared`; `apps/web/src/shared/api/client.ts` разбирает ответ обратно в этот же тип и бросает `ApiRequestError`. Меняя формат ошибки, правь обе стороны и тип в `packages/shared/src/api.ts`. `apps/web/src/shared/api/action-error.ts` (`toActionErrorState`) переводит `ApiRequestError` в состояние, удобное для формы: общее сообщение + `fieldErrors` по имени поля DTO (class-validator отдаёт ошибки строками вида `"email must be an email"` — первое слово в них и есть имя поля).
-
-**Frontend-архитектура (Feature-Sliced Design).** `apps/web/src` организован по слоям FSD; App Router (`app/`) заменяет собой слой `pages` и остаётся тонким — только роутинг и сборка виджетов/фич, без бизнес-логики:
-
-```
-app/            # роуты Next.js (тонкие: страница = вёрстка + импорт фичи/виджета)
-widgets/        # композиция сущностей+фич для конкретного места в UI
-                #   (auth-status, dashboard-header, month-summary, transaction-list)
-features/       # самостоятельное действие пользователя (auth-login, auth-register, auth-logout,
-                #   transaction-create, transaction-delete, transactions-filter, category-create):
-                #   model/ — zod-схема, api/ — 'use server' экшен, ui/ — форма
-entities/       # бизнес-сущности: session (httpOnly-cookie с access-токеном), user,
-                #   category, transaction
-shared/         # переиспользуемое без знания о домене: api/ (клиент+ошибки), ui/ (shadcn), lib/ (cn)
-```
-
-Слой может импортировать только из слоёв ниже себя (`app → widgets → features → entities → shared`), не наоборот и не соседей одного уровня напрямую — исключение оговорено явно, если появится. Соседей связывают слотами: `TransactionRow` (entities/transaction) принимает категорию и действия готовыми `ReactNode`, а собирает их виджет, которому доступны оба слоя. Публичный API каждого среза — его `index.ts`; импортируй `@/features/auth-login`, а не `@/features/auth-login/ui/login-form`.
-
-**Главный экран** (`app/page.tsx`). Неавторизованных уводит на `/login`. Все три запроса (категории, страница транзакций, сводка за месяц) идут одним `Promise.all` в самой странице, а не внутри виджетов: вложенные серверные компоненты выстроили бы их в водопад. Фильтры и номер страницы живут в query-строке, а не в `useState`, — список рисует серверный компонент, поэтому смена фильтра это навигация; заодно состояние переживает перезагрузку и передаётся ссылкой. Страница за пределами списка (сохранённая ссылка, удалённые записи, смена фильтра) редиректится на последнюю существующую — иначе экран показывал бы пустоту при ненулевом `total`.
-
-**Пагинация.** `GET /transactions` принимает `page` и `limit` (по умолчанию 1 и 10) и возвращает `Paginated<Transaction>`. В репозитории `findMany` и `count` идут одной транзакцией Prisma: иначе `total` может разойтись со страницей из-за параллельной вставки. Сортировка — по `date`, вторым ключом `createdAt`: у записей одной даты порядок иначе не определён, и они «прыгали» бы между страницами. Размер страницы продублирован во фронтенде как `TRANSACTIONS_PAGE_SIZE` (`entities/transaction`).
-
-**Аутентификация.** `POST /auth/login` и `/auth/register` отдают JWT в теле ответа (`AuthResponse.accessToken`), который `entities/session` (`apps/web/src/entities/session/lib/session.ts`) кладёт в httpOnly-cookie на срок `expiresIn`; `entities/user` читает её и ходит в `GET /auth/me` с заголовком `Authorization: Bearer`. Экшены в `features/auth-*/api/actions.ts` — единственное место, где создаётся/удаляется сессия.
-
-Все остальные запросы к API берут заголовок у `getAuthHeaders()` из `entities/session`: без токена он сам делает `redirect('/login')`, поэтому истёкшая кука одинаково обрабатывается и на страницах, и в экшенах. **Вызывать его нужно вне `try/catch`** — `redirect()` бросает `NEXT_REDIRECT`, и `catch` превратил бы переход в «ошибку запроса».
-
-**shadcn/ui.** `apps/web/components.json` настраивает алиасы shadcn на FSD-раскладку (`ui`/`components` → `shared/ui`, `utils` → `shared/lib/utils`), так что `npx shadcn add <name>` кладёт компонент туда же, где уже лежат остальные. После `shadcn add` проверь три вещи — CLI ошибается на каждой:
-
-1. **Импорт `cn`.** CLI пишет `import { cn } from "cn"`, подтягивая посторонний npm-пакет вместо алиаса. Меняй на `@/shared/lib/utils` и не давай `cn` попасть в зависимости.
-2. **Токены `accent`.** Заменяй `accent`/`accent-foreground` на `secondary`/`secondary-foreground` (см. ниже).
-3. **Примитивы Radix.** В проекте они берутся из единого пакета `radix-ui` (`import { Dialog as DialogPrimitive } from 'radix-ui'`), а не из точечных `@radix-ui/react-*` — так их подключает актуальный реестр shadcn, и второй способ в репозитории не заводим.
-
-Отдельно: `FormField` в `shared/ui/form.tsx` дополнен третьим параметром `TTransformedValues` относительно исходника shadcn. Он нужен схемам с `transform` (у `transaction-create` сумма — строка на входе и число на выходе): без него `Control` от такого `useForm` не подходит по типу. При перегенерации `form` этот параметр придётся вернуть.
-
-Токены компонентов (`--color-background`, `--color-primary`, `--color-border` и т.д.) в `globals.css` — не отдельная палитра, а алиасы через `var()` поверх уже существующих `--color-surface`/`--color-ink`/`--color-accent`: так тёмная тема остаётся общей и переопределяется в одном месте. Не заводи новый `--color-accent`-подобный токен под нейтральный hover-фон — там, где стандартный shadcn использует `accent`/`accent-foreground` (hover у `outline`/`ghost`), в этом проекте переиспользован `secondary`, потому что `--color-accent` уже занят под фирменный синий (= shadcn `primary`).
-
-Обратная сторона: если компонент красится токеном, которого в `globals.css` нет, Tailwind v4 просто не сгенерирует класс — без ошибки. Так `dropdown-menu` и `select` какое-то время открывались вообще без фона из-за отсутствующего `--color-popover`. Добавляя компонент, сверяй его токены со списком в `@theme`.
-
-**Валидация форм.** Zod-схемы в `features/*/model/schema.ts` зеркалят ограничения DTO из `apps/api` (длина имени, формат email, `password` ≥ 8 символов с буквой и цифрой) и требуют непустые поля — это первый рубеж проверки. Второй — сам API: серверный экшен обязательно валидирует данные ещё раз через `schema.safeParse` перед вызовом `api.post`, а `RegisterDto` в API собран с `forbidNonWhitelisted: true`, поэтому поле `confirmPassword` (только для формы) явно вырезается перед отправкой.
-
 **`packages/shared` компилируется в `dist`** (`tsc -b`, `composite: true`), а не потребляется как исходники: Nest собирается в CommonJS и не умеет импортировать сырой TS из workspace. Поэтому в `turbo.json` у задач `dev`, `lint`, `typecheck` стоит `dependsOn: ["^build"]` — не убирать. Для Next пакет дополнительно указан в `transpilePackages`.
 
-**Prisma 7 отличается от 6:** `new PrismaClient()` без driver adapter бросает ошибку, поэтому `PrismaService` (`apps/api/src/prisma/prisma.service.ts`) передаёт `new PrismaPg({ connectionString })` из `ConfigService`. Клиент генерируется в `apps/api/src/generated/prisma` (папка в `.gitignore`) как TypeScript-исходники, генератор — `prisma-client` с `moduleFormat = "cjs"` под CommonJS-сборку Nest; импорт — из `generated/prisma/client`. Блок `datasource` в схеме **не содержит `url`** — в Prisma 7 это ошибка валидации P1012: URL для CLI задаётся в `apps/api/prisma.config.ts` через `process.env.DATABASE_URL ?? ''` (не через `env()`, иначе `prisma generate` падает без поднятой БД), а рантайм получает подключение из адаптера.
+**Разделение ответственности между приложениями.** `apps/api` владеет схемой БД, DTO и бизнес-правилами; `apps/web` не ходит в БД и не держит своих правил доступа. Общее — только транспортные типы ответов в `packages/shared/src/api.ts`: DTO запросов остаются в `apps/api`, а ограничения полей продублированы zod-схемами в `apps/web` вручную — меняя контракт, правь все три места и коммить их раздельно (`shared`, `api`, `web`).
 
-**Валидация** — class-validator: глобальный `ValidationPipe` в `main.ts` с `whitelist`, `forbidNonWhitelisted`, `transform`. DTO-классы живут в `apps/api`, во `shared` идут только транспортные типы ответов.
+**Prisma 7 отличается от 6:** `new PrismaClient()` без driver adapter бросает ошибку, схема запрещает `url` в `datasource`, клиент генерируется в `apps/api/src/generated/prisma` и в гит не попадает — поэтому `npm run prisma:generate -w @expense-tracker/api` обязателен после `npm install` и после смены ветки со схемой. Подробности — в `apps/api/CLAUDE.md`.
 
 ## Ограничения по версиям
 
