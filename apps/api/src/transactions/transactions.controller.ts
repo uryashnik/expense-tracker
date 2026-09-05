@@ -11,7 +11,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import type { Transaction, TransactionSummary } from '@expense-tracker/shared';
+import type { Paginated, Transaction, TransactionSummary } from '@expense-tracker/shared';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/types/jwt-payload';
 import { TransactionsService } from './transactions.service';
@@ -36,12 +36,11 @@ export class TransactionsController {
   }
 
   @Get()
-  async findAll(
+  findAll(
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: FindTransactionsQueryDto,
-  ): Promise<Transaction[]> {
-    const transactions = await this.transactionsService.findAllForUser(user.id, query);
-    return transactions.map((transaction) => this.transactionsService.toTransaction(transaction));
+  ): Promise<Paginated<Transaction>> {
+    return this.transactionsService.findPageForUser(user.id, query);
   }
 
   // Объявлен до @Get(':id'): иначе Nest сматчит "summary" на параметр id
