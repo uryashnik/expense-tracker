@@ -19,10 +19,15 @@
   --color-foreground: var(--color-ink);
   --color-card: var(--color-surface);
   --color-card-foreground: var(--color-ink);
+  /* Всплывающие слои (dropdown-menu, select) — на цвете основной поверхности:
+     от неё их отделяют собственные border и shadow. */
+  --color-popover: var(--color-surface);
+  --color-popover-foreground: var(--color-ink);
   --color-primary: var(--color-accent);
   --color-primary-foreground: #ffffff;
   --color-secondary: var(--color-surface-muted);
   --color-secondary-foreground: var(--color-ink);
+  --color-muted: var(--color-surface-muted);
   --color-muted-foreground: var(--color-ink-muted);
   --color-ring: var(--color-accent);
   /* У этих трёх нет прямого аналога в исходной палитре — переопределяются в тёмной теме отдельно. */
