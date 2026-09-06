@@ -3,7 +3,7 @@ name: pr
 description: Создание Pull Request по правилам проекта — заголовок в формате коммита с проверкой commitlint, тело по фактическому диффу (что и зачем, изменения контракта, решения, как проверено), создание через gh. Использовать, когда просят открыть/создать PR, «сделай пулреквест», «оформи PR», /pr.
 effort: high
 allowed-tools: Bash(git *), Bash(gh *)
-argument-hint: <title> <base-branch, default main>
+argument-hint: "<title>" <base-branch, default main>
 ---
 
 # PR Skill
@@ -12,17 +12,17 @@ argument-hint: <title> <base-branch, default main>
 
 ## Arguments
 
-- $0 - название PR
-- $1 - целевая ветка
+- $1 - название PR, всегда в кавычках: `/pr "rework pr skill"`
+- $2 - целевая ветка
 
 ## Подготовка
 
 1. Проверь что ветка готова:
    !`bash ${CLAUDE_SKILL_DIR}/scripts/validate.sh`
 2. Получи diff от базовой ветки:
-   !`git diff ${ARGUMENTS:-main}..HEAD`
+   !`git diff ${2:-main}..HEAD`
 3. Получи список коммитов:
-   !`git log ${ARGUMENTS:-main}..HEAD --oneline
+   !`git log ${2:-main}..HEAD --oneline
 
 ## Задача
 
@@ -34,9 +34,9 @@ argument-hint: <title> <base-branch, default main>
 
 Создай PR командой:
 gh pr create \
---title "$0 или сгенерированный title" \
+--title "$1 или сгенерированный title" \
 --body "заполненный шаблон" \
---base "${ARGUMENTS:-main}"
+--base "${2:-main}"
 
 ## Правила
 
