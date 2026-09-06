@@ -18,15 +18,15 @@ export function CategoryBadge({
   }
 
   return (
-    <span className={cn('flex items-center gap-2 text-sm', className)}>
+    <span className={cn('flex items-center gap-3 text-sm', className)}>
       <span
         aria-hidden
-        className="flex size-8 shrink-0 items-center justify-center rounded-full text-base"
-        style={{ backgroundColor: `${category.color}22`, color: category.color }}
+        className="flex size-10 shrink-0 items-center justify-center rounded-2xl text-lg"
+        style={{ backgroundColor: `${category.color}1f`, color: category.color }}
       >
         {category.icon}
       </span>
-      <span className="truncate font-medium">{category.name}</span>
+      <span className="truncate font-semibold">{category.name}</span>
     </span>
   );
 }

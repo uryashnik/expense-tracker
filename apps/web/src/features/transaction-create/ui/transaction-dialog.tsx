@@ -145,9 +145,9 @@ export function TransactionDialog({
                             aria-pressed={field.value === option.value}
                             onClick={() => field.onChange(option.value)}
                             className={cn(
-                              'rounded-md border px-3 py-2 text-sm font-medium transition-colors',
+                              'rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors',
                               field.value === option.value
-                                ? 'border-primary bg-secondary text-secondary-foreground'
+                                ? 'border-accent bg-accent text-on-accent'
                                 : 'text-ink-muted hover:bg-secondary',
                             )}
                           >
@@ -204,7 +204,7 @@ export function TransactionDialog({
                     <FormLabel>Категория</FormLabel>
                     <Select value={field.value} onValueChange={field.onChange}>
                       <FormControl>
-                        <SelectTrigger className="w-full">
+                        <SelectTrigger className="h-11 w-full rounded-xl">
                           <SelectValue placeholder="Выберите категорию" />
                         </SelectTrigger>
                       </FormControl>

@@ -62,7 +62,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   }
 
   return (
-    <main className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-10">
+    <main className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-6 sm:px-8 sm:py-10">
       <DashboardHeader user={user} categories={categories} />
       <MonthSummary summary={summary} />
       <TransactionList page={transactions} categories={categories} query={query} />

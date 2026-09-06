@@ -37,9 +37,16 @@ export function formatTransactionDate(isoDate: string): string {
   return dateFormatter.format(new Date(isoDate));
 }
 
-/** Название месяца по номеру (1–12) и году — для заголовка сводки. */
+/**
+ * Название месяца по номеру (1–12) и году — для заголовка сводки: «Сентябрь 2026».
+ * Intl отдаёт «сентябрь 2026 г.» — сокращение года в заголовке лишнее,
+ * а первая буква заглавная, потому что это начало строки, а не часть фразы.
+ */
 export function formatMonth(month: number, year: number): string {
-  return monthFormatter.format(new Date(Date.UTC(year, month - 1, 1)));
+  const formatted = monthFormatter
+    .format(new Date(Date.UTC(year, month - 1, 1)))
+    .replace(' г.', '');
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1);
 }
 
 /** Значение для <input type="date"> из ISO-строки API. */

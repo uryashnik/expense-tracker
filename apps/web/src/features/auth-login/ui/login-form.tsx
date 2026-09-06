@@ -74,7 +74,7 @@ export function LoginForm() {
           )}
         />
 
-        <Button type="submit" disabled={isPending} className="mt-2">
+        <Button type="submit" size="lg" disabled={isPending} className="mt-2 w-full">
           {isPending ? <Loader2 className="size-4 animate-spin" /> : null}
           Войти
         </Button>
@@ -83,7 +83,7 @@ export function LoginForm() {
           Ещё нет аккаунта?{' '}
           <Link
             href="/register"
-            className="font-medium text-primary underline-offset-4 hover:underline"
+            className="font-semibold text-ink underline decoration-ink/30 underline-offset-4 hover:decoration-ink"
           >
             Зарегистрироваться
           </Link>

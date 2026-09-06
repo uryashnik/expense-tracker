@@ -125,9 +125,9 @@ export function CategoryDialog({ trigger }: { trigger?: React.ReactNode }) {
                           aria-pressed={field.value === option}
                           onClick={() => field.onChange(option)}
                           className={cn(
-                            'flex size-9 items-center justify-center rounded-md border text-lg transition-colors',
+                            'flex size-11 items-center justify-center rounded-2xl border text-xl transition-colors',
                             field.value === option
-                              ? 'border-primary bg-secondary'
+                              ? 'border-accent bg-secondary'
                               : 'hover:bg-secondary',
                           )}
                         >
@@ -158,7 +158,7 @@ export function CategoryDialog({ trigger }: { trigger?: React.ReactNode }) {
                           onClick={() => field.onChange(option)}
                           style={{ backgroundColor: option }}
                           className={cn(
-                            'size-7 rounded-full border-2 transition-transform',
+                            'size-8 rounded-full border-2 transition-transform',
                             field.value === option
                               ? 'border-ink scale-110'
                               : 'border-transparent hover:scale-105',
@@ -169,7 +169,7 @@ export function CategoryDialog({ trigger }: { trigger?: React.ReactNode }) {
                       <Input
                         type="color"
                         aria-label="Свой цвет"
-                        className="h-9 w-12 cursor-pointer p-1"
+                        className="h-11 w-14 cursor-pointer rounded-xl p-1"
                         value={field.value}
                         onChange={field.onChange}
                       />
@@ -180,11 +180,11 @@ export function CategoryDialog({ trigger }: { trigger?: React.ReactNode }) {
               )}
             />
 
-            <div className="flex items-center gap-2 rounded-md bg-surface-muted p-3 text-sm">
+            <div className="flex items-center gap-3 rounded-2xl bg-secondary p-4 text-sm">
               <span
                 aria-hidden
-                className="flex size-8 items-center justify-center rounded-full text-base"
-                style={{ backgroundColor: `${color}22`, color }}
+                className="flex size-10 items-center justify-center rounded-2xl text-lg"
+                style={{ backgroundColor: `${color}1f`, color }}
               >
                 {icon}
               </span>

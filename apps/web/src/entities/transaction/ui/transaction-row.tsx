@@ -23,10 +23,10 @@ export function TransactionRow({
   const isIncome = transaction.type === 'INCOME';
 
   return (
-    <li className="flex items-center gap-3 px-4 py-3 sm:gap-4">
+    <li className="flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-secondary/60 sm:gap-4 sm:px-7">
       <div className="min-w-0 flex-1">{category}</div>
 
-      <div className="hidden min-w-0 flex-1 flex-col sm:flex">
+      <div className="hidden min-w-0 flex-1 flex-col gap-0.5 sm:flex">
         {transaction.description ? (
           <span className="truncate text-sm">{transaction.description}</span>
         ) : null}
@@ -37,8 +37,8 @@ export function TransactionRow({
         className={cn(
           // min-w фиксирует колонку суммы: без него её ширина зависит от числа,
           // и соседняя колонка с описанием дёргается от строки к строке.
-          'w-32 shrink-0 text-right font-medium tabular-nums',
-          isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-ink',
+          'w-32 shrink-0 text-right text-[0.9375rem] font-extrabold tracking-tight tabular-nums',
+          isIncome ? 'text-positive' : 'text-ink',
         )}
       >
         {formatSignedMoney(transaction.amount, transaction.type)}

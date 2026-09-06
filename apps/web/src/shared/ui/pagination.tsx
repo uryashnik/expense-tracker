@@ -58,11 +58,10 @@ export function Pagination({
     return null;
   }
 
+  // Текущая страница — залитая чернильная пилюля: в монохромной палитре
+  // это единственный способ отличить «где я» от «куда можно».
   const linkClass = (active: boolean) =>
-    cn(
-      buttonVariants({ variant: active ? 'secondary' : 'ghost', size: 'icon' }),
-      active && 'font-semibold',
-    );
+    buttonVariants({ variant: active ? 'default' : 'ghost', size: 'icon' });
 
   return (
     <nav aria-label="Страницы списка" className={cn('flex items-center gap-1', className)}>
