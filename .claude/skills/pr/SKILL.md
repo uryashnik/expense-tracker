@@ -22,7 +22,7 @@ argument-hint: "<title>" <base-branch, default main>
 2. Получи diff от базовой ветки:
    !`git diff ${2:-main}..HEAD`
 3. Получи список коммитов:
-   !`git log ${2:-main}..HEAD --oneline
+   !`git log ${2:-main}..HEAD --oneline`
 
 ## Задача
 
