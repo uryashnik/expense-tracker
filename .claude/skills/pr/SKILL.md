@@ -18,7 +18,7 @@ argument-hint: "<title>" <base-branch, default main>
 ## Подготовка
 
 1. Проверь что ветка готова:
-   !`bash ${CLAUDE_SKILL_DIR}/scripts/validate.sh`
+   !`bash ${CLAUDE_SKILL_DIR}/scripts/validate.sh ${2:-main}`
 2. Получи diff от базовой ветки:
    !`git diff ${2:-main}..HEAD`
 3. Получи список коммитов:
