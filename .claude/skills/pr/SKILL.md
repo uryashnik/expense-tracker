@@ -19,9 +19,11 @@ argument-hint: "<title>" <base-branch, default main>
 
 1. Проверь что ветка готова:
    !`bash ${CLAUDE_SKILL_DIR}/scripts/validate.sh ${2:-main}`
-2. Получи diff от базовой ветки:
+2. Проверь, не открыт ли уже PR для этой ветки:
+   !`gh pr view --json number,url,state 2>/dev/null || echo "открытого PR нет"`
+3. Получи diff от базовой ветки:
    !`git diff ${2:-main}..HEAD`
-3. Получи список коммитов:
+4. Получи список коммитов:
    !`git log ${2:-main}..HEAD --oneline`
 
 ## Задача
@@ -48,3 +50,5 @@ gh pr create \
   ```
 - Если ветка не запушена:
   git push --set-upstream origin HEAD
+- PR для ветки уже открыт — не создавать второй, обновить существующий:
+  gh pr edit --title/--body-file
