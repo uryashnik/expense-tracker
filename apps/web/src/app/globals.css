@@ -1,13 +1,45 @@
 @import 'tailwindcss';
 
-/* Токены дизайна: доступны и как утилиты Tailwind (bg-surface, text-ink), и как CSS-переменные. */
+/*
+ * Токены дизайна: доступны и как утилиты Tailwind (bg-canvas, text-ink), и как CSS-переменные.
+ *
+ * Палитра монохромная: единственный «цвет бренда» — чернильно-чёрный (--color-accent),
+ * им красятся кнопки, пилюли и иконки. Цвет в интерфейсе несут только данные:
+ * пастельные плитки сводки и цвета категорий, приходящие из API.
+ */
 @theme {
+  /* Основа: тёплый серо-бежевый холст, на нём белые «плиты» контента. */
+  --color-canvas: #edeae3;
   --color-surface: #ffffff;
-  --color-surface-muted: #f4f5f7;
-  --color-ink: #16181d;
-  --color-ink-muted: #61656e;
-  --color-accent: #2f6feb;
-  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --color-surface-muted: #f4f2ec;
+  --color-ink: #111318;
+  --color-ink-muted: #767b86;
+  --color-accent: #14161c;
+  --color-on-accent: #ffffff;
+
+  /* Плитки сводки: цвет здесь — признак типа данных, а не украшение. */
+  --color-mint: #dbeee1;
+  --color-peach: #fae4d6;
+  --color-night: #14161c;
+  --color-night-ink: #f4f3ef;
+  --color-night-muted: #979dab;
+  --color-night-icon: #ffffff1f;
+
+  /* Знак суммы: доход подсвечен, расход остаётся нейтральным чернильным. */
+  --color-positive: #17603b;
+
+  --color-destructive: #b8402a;
+  --color-border: #e7e3da;
+  --color-input: #dedacf;
+
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  /*
+   * Тени низкоконтрастные и широкие: плита должна «лежать» на холсте,
+   * а не висеть над ним. У пастельных плиток тени нет вовсе — их отделяет заливка.
+   */
+  --shadow-plate: 0 1px 2px rgb(17 19 24 / 0.04), 0 24px 48px -32px rgb(17 19 24 / 0.28);
+  --shadow-pill: 0 1px 2px rgb(17 19 24 / 0.06);
 
   /*
    * Токены для shadcn/ui (apps/web/src/shared/ui) — алиасы поверх палитры выше,
@@ -24,30 +56,44 @@
   --color-popover: var(--color-surface);
   --color-popover-foreground: var(--color-ink);
   --color-primary: var(--color-accent);
-  --color-primary-foreground: #ffffff;
+  --color-primary-foreground: var(--color-on-accent);
   --color-secondary: var(--color-surface-muted);
   --color-secondary-foreground: var(--color-ink);
   --color-muted: var(--color-surface-muted);
   --color-muted-foreground: var(--color-ink-muted);
   --color-ring: var(--color-accent);
-  /* У этих трёх нет прямого аналога в исходной палитре — переопределяются в тёмной теме отдельно. */
-  --color-destructive: #dc2626;
-  --color-border: #e2e4e9;
-  --color-input: #e2e4e9;
-  --radius: 0.625rem;
+  --radius: 0.875rem;
 }
 
 /* Тёмная тема переопределяет те же переменные — @theme допустим только на верхнем уровне. */
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-surface: #14161a;
-    --color-surface-muted: #1d2027;
-    --color-ink: #f2f3f5;
-    --color-ink-muted: #a2a7b3;
-    --color-accent: #6a9bff;
-    --color-destructive: #f87171;
-    --color-border: #2a2d35;
-    --color-input: #2a2d35;
+    --color-canvas: #0b0d11;
+    --color-surface: #171b22;
+    --color-surface-muted: #1c2027;
+    --color-ink: #f1f1ee;
+    --color-ink-muted: #8b919d;
+    /* Акцент инвертируется: чёрная пилюля на тёмном холсте нечитаема,
+       поэтому «фирменный» цвет становится светлым, а текст на нём — чернильным. */
+    --color-accent: #f1f1ee;
+    --color-on-accent: #14161c;
+
+    --color-mint: #16301f;
+    --color-peach: #33241a;
+    /* В тёмной теме акцентная плитка инвертируется вместе с акцентом: тёмное
+       на тёмном перестало бы выделяться среди пастельных соседей. */
+    --color-night: #f1f1ee;
+    --color-night-ink: #14161c;
+    --color-night-muted: #5c626e;
+    --color-night-icon: #14161c1f;
+
+    --color-positive: #6fd39b;
+    --color-destructive: #d4614a;
+    --color-border: #262b33;
+    --color-input: #2b313a;
+
+    --shadow-plate: 0 1px 2px rgb(0 0 0 / 0.4), 0 24px 48px -32px rgb(0 0 0 / 0.6);
+    --shadow-pill: 0 1px 2px rgb(0 0 0 / 0.3);
   }
 }
 
@@ -59,7 +105,25 @@
 }
 
 body {
-  background-color: var(--color-surface);
+  background-color: var(--color-canvas);
   color: var(--color-ink);
   font-family: var(--font-sans);
+}
+
+/* Заголовки и суммы набраны предельно жирным начертанием — это опора всей типографики. */
+h1,
+h2,
+h3 {
+  letter-spacing: -0.02em;
+}
+
+/* Анимации входа (Radix) отключаются вместе с системной настройкой. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

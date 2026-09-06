@@ -32,9 +32,9 @@ export function UserMenu({ user, logout }: { user: AuthUser; logout: ReactNode }
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="rounded-full" aria-label="Профиль">
-          <Avatar className="size-9">
-            <AvatarFallback className="bg-secondary text-sm font-medium">
+        <Button variant="ghost" size="icon" className="size-11 p-0" aria-label="Профиль">
+          <Avatar className="size-11">
+            <AvatarFallback className="border bg-surface text-sm font-extrabold">
               {initials(user.name)}
             </AvatarFallback>
           </Avatar>

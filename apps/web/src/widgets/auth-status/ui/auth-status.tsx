@@ -10,12 +10,15 @@ export async function AuthStatus() {
   if (!user) {
     return (
       <div className="flex items-center gap-4 text-sm">
-        <Link href="/login" className="font-medium text-primary underline-offset-4 hover:underline">
+        <Link
+          href="/login"
+          className="font-semibold text-ink underline decoration-ink/30 underline-offset-4 hover:decoration-ink"
+        >
           Войти
         </Link>
         <Link
           href="/register"
-          className="font-medium text-primary underline-offset-4 hover:underline"
+          className="font-semibold text-ink underline decoration-ink/30 underline-offset-4 hover:decoration-ink"
         >
           Зарегистрироваться
         </Link>
