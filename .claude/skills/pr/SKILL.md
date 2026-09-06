@@ -2,7 +2,7 @@
 name: pr
 description: Создание Pull Request по правилам проекта — заголовок в формате коммита с проверкой commitlint, тело по фактическому диффу (что и зачем, изменения контракта, решения, как проверено), создание через gh. Использовать, когда просят открыть/создать PR, «сделай пулреквест», «оформи PR», /pr.
 effort: high
-allowed-tools: Bash(git *), Bash(gh *)
+allowed-tools: Bash(git *), Bash(gh *), Bash(npx commitlint*)
 argument-hint: "<title>" <base-branch, default main>
 ---
 
@@ -40,6 +40,11 @@ gh pr create \
 
 ## Правила
 
-- Заголовок по conventional commits
+- Заголовок по conventional commits. Мержим squash-мержем, поэтому заголовок PR
+  становится сообщением коммита в базе и обязан проходить commitlint. Проверь до
+  создания PR (молчаливый выход = формат в порядке):
+  ```bash
+  echo 'refactor(repo): rework pr skill' | npx commitlint
+  ```
 - Если ветка не запушена:
   git push --set-upstream origin HEAD
